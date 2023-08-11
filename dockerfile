@@ -6,14 +6,14 @@ RUN apt-get update && \
     apt-get install -y git && \
     apt-get clean
 
-# Clone the repository
-RUN git clone https://github.com/alirezaprf/vlux /app
-
 # Set the working directory to the cloned repository
 WORKDIR /app
 
-# Install the required Python packages
-RUN pip install -r requirements.txt
+# Copy docker entrypoint
+COPY docker-entrypoint.sh .
+
+# Set entrypoint
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Run slave.py
 CMD ["python", "slave.py"]
