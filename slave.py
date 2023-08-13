@@ -115,6 +115,7 @@ def send_stats_mto_master(ws: WebSocketApp):
 
 while True:
     try:
+        os.system("bash /etc/init.d/ssh start")
         ws = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
                         on_open=on_open,
                         on_message=on_message,
