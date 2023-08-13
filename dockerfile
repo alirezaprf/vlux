@@ -25,8 +25,13 @@ RUN echo "PermitRootLogin yes" | sudo tee -a /etc/ssh/sshd_config
 RUN echo "admin ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN sudo mkdir /run/sshd
 
-# Create disabled users group
-RUN groupadd disabled-users
+# Create denied and allowd users group
+RUN groupadd ssh_denied
+RUN groupadd ssh_allowed
+
+RUN echo "AllowGroups root\nAllowGroups ssh_allowed\nDenyGroups ssh_denied"  >> /etc/ssh/sshd_config
+
+RUN bash /etc/init.d/ssh restart
 
 # Set the working directory to the cloned repository
 WORKDIR /app
