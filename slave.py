@@ -1,4 +1,6 @@
 import json
+import subprocess
+
 from websocket import WebSocketApp
 import time
 import os
@@ -6,37 +8,40 @@ from threading import Thread
 
 MASTER_URL = "vluxm.irsuniversity.space"
 WS_PORT = "8000"
-CREATE_USER_SUCCESS_MESSAGE = ""
-ENABLE_USER_SUCCESS_MESSAGE = ""
-DISABLE_USER_SUCCESS_MESSAGE = ""
 
 
 def add_user_with_password(username, password):
     try:
-        os.system(f'useradd -s /usr/sbin/nologin {username}')
-        os.system(f'adduser {username} ssh_allowed')
-        os.system(f'echo {username}:{password} | chpasswd')
-        print(f"User '{username}' added with password successfully.")
-    except Exception as e:
-        print(f"User '{username}' Failed.")
-        print(f"Error: {e}")
+        subprocess.run(['useradd', '-M', '-s', '/bin/false', username], check=True)
+        change_password_for_user(username, password)
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred on creating user `{username}`. {e}")
 
 
 def disable_ssh_for_user(username):
     try:
-        os.system(f'adduser {username} ssh_denied')
-        os.system(f'pkill -u {username}')
+        subprocess.run(['adduser', username, 'disabled_users'], check=True)
+        print(f"User {username} added to disabled_users group.")
+        subprocess.run(['pkill', '-u', username], check=True)
         print(f"SSH access disabled for user '{username}'.")
-    except Exception as e:
-        print(f"Error: {e}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred on disabling user `{username}`. {e}")
 
 
 def enable_ssh_for_user(username):
     try:
-        os.system(f'gpasswd -d {username}  ssh_denied')
-        print(f"SSH access enabled for user '{username}'.")
-    except Exception as e:
-        print(f"Error: {e}")
+        subprocess.run(['gpasswd', '-d', username, 'disabled_users'], check=True)
+        print(f"User {username} removed from disabled_users group.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred on enabling user `{username}`. {e}")
+
+
+def change_password_for_user(username, new_password):
+    try:
+        subprocess.run(f'echo {username}:{new_password} | chpasswd', shell=True, check=True)
+        print(f"User '{username}' added with password {new_password}.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred on changing password of user `{username}`. {e}")
 
 
 def new_command(cmd: str):
@@ -47,18 +52,18 @@ def new_command(cmd: str):
     user = data.get('username')
 
     if action == "add-user":
-        pasword = data['password']
-        add_user_with_password(user, pasword)
-        #ws.send(CREATE_USER_SUCCESS_MESSAGE)
+        password = data['password']
+        add_user_with_password(user, password)
     elif action == "disable-user":
         disable_ssh_for_user(user)
-        #ws.send(DISABLE_USER_SUCCESS_MESSAGE)
     elif action == 'enable-user':
         enable_ssh_for_user(user)
-        #ws.send(ENABLE_USER_SUCCESS_MESSAGE)
     elif action == "fetch-users":
         for U in data["users"]:
             add_user_with_password(U["username"], U["password"])
+    elif action == "change-password":
+        new_password = data["new-password"]
+        change_password_for_user(user, new_password)
 
 
 def on_message(ws, message):
@@ -71,11 +76,11 @@ def on_error(ws, error):
 
 def on_close(ws: WebSocketApp, close_status_code, close_msg):
     ws_new = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
-                  on_open=on_open,
-                  on_message=on_message,
-                  on_error=on_error,
-                  on_close=on_close,
-                  header={"Cookie": "session=tokenman"},)
+                          on_open=on_open,
+                          on_message=on_message,
+                          on_error=on_error,
+                          on_close=on_close,
+                          header={"Cookie": f"session={os.getenv('SLAVE_SESSION_KEY')}"}, )
     ws_thread = Thread(target=ws_new.run_forever)
     ws_thread.start()
 
@@ -115,7 +120,6 @@ def send_stats_mto_master(ws: WebSocketApp):
 
 while True:
     try:
-        #os.system("bash /etc/init.d/ssh start")
         ws = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
                         on_open=on_open,
                         on_message=on_message,

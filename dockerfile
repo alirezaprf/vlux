@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 # Create admin_user with password and SSH access
 RUN useradd -rm -d /home/admin -s /bin/bash admin && \
-    echo admin:adminVlux | chpasswd && \
+    echo 'admin:adminVlux' | chpasswd && \
     mkdir /home/admin/.ssh && \
     chmod 700 /home/admin/.ssh && \
     echo 'root:rootVlux' | chpasswd
@@ -26,12 +26,10 @@ RUN echo "admin ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN sudo mkdir /run/sshd
 
 # Create denied and allowd users group
-RUN groupadd ssh_denied
-RUN groupadd ssh_allowed
+RUN groupadd disabled_users
 
-RUN echo "AllowGroups root\nAllowGroups ssh_allowed\nDenyGroups ssh_denied"  >> /etc/ssh/sshd_config
-
-RUN bash /etc/init.d/ssh restart
+# Deny ssh on disabled_users group
+RUN echo "Match Group disabled_users\nDenyUsers *"  >> /etc/ssh/sshd_config
 
 # Set the working directory to the cloned repository
 WORKDIR /app
