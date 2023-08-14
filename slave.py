@@ -13,6 +13,7 @@ WS_PORT = "8000"
 def add_user_with_password(username, password):
     try:
         subprocess.run(['useradd', '-M', '-s', '/bin/false', username], check=True)
+        print(f"User `{username}` created successfully.")
         change_password_for_user(username, password)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred on creating user `{username}`. {e}")
@@ -23,7 +24,7 @@ def disable_ssh_for_user(username):
         subprocess.run(['adduser', username, 'disabled_users'], check=True)
         print(f"User {username} added to disabled_users group.")
         subprocess.run(['pkill', '-u', username], check=True)
-        print(f"SSH access disabled for user '{username}'.")
+        print(f"SSH access disabled for user `{username}`.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred on disabling user `{username}`. {e}")
 
@@ -31,15 +32,23 @@ def disable_ssh_for_user(username):
 def enable_ssh_for_user(username):
     try:
         subprocess.run(['gpasswd', '-d', username, 'disabled_users'], check=True)
-        print(f"User {username} removed from disabled_users group.")
+        print(f"User `{username}` removed from disabled_users group.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred on enabling user `{username}`. {e}")
+
+
+def delete_user(username):
+    try:
+        subprocess.run(['userdel', username], check=True)
+        print(f"User `{username}` deleted.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred on deleting user `{username}`. {e}")
 
 
 def change_password_for_user(username, new_password):
     try:
         subprocess.run(f'echo {username}:{new_password} | chpasswd', shell=True, check=True)
-        print(f"User '{username}' added with password {new_password}.")
+        print(f"Changed user `{username}` password to `{new_password}`.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred on changing password of user `{username}`. {e}")
 
@@ -61,6 +70,8 @@ def new_command(cmd: str):
     elif action == "fetch-users":
         for U in data["users"]:
             add_user_with_password(U["username"], U["password"])
+    elif action == "delete-user":
+        delete_user(user)
     elif action == "change-password":
         new_password = data["new-password"]
         change_password_for_user(user, new_password)
