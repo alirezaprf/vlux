@@ -82,68 +82,39 @@ def on_message(ws, message):
 
 
 def on_error(ws, error):
-    print(error)
+    print(f"Error occurred : {error}")
 
 
 def on_close(ws: WebSocketApp, close_status_code, close_msg):
-    ws_new = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
-                          on_open=on_open,
-                          on_message=on_message,
-                          on_error=on_error,
-                          on_close=on_close,
-                          header={"Cookie": f"session={os.getenv('SLAVE_SESSION_KEY')}"}, )
-    ws_thread = Thread(target=ws_new.run_forever)
-    ws_thread.start()
+    print(f"Websocket connection closed. {close_status_code}. {close_msg}")
+    start_websocket()
 
 
 def on_open(ws: WebSocketApp):
     print("Opened connection ")
 
 
-def read_nethogs():
-    fp = open('./logs/nethogs')
-    lines = fp.readlines()
-    fp.close()
-    users = []
-    for L in lines:
-        user, recv, sent = L.split(',')
-        users.append((user, sent + recv))
-    return users
-
-
-def send_stats_mto_master(ws: WebSocketApp):
-    while True:
-        try:
-            for user, traffic in read_nethogs():
-                ws.send(json.dumps(
-                    {
-                        "type": "add-traffic",
-                        "date": {
-                            "username": user,
-                            "size": traffic
-                        }
-                    }
-                ))
-            time.sleep(2 * 60)
-        except:
-            pass
+def start_websocket():
+    websocket = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
+                             on_open=on_open,
+                             on_message=on_message,
+                             on_error=on_error,
+                             on_close=on_close,
+                             header={"Cookie": f"session={os.getenv('SLAVE_SESSION_KEY')}"}, )
+    ws_thread = Thread(target=websocket.run_forever)
+    ws_thread.start()
+    return websocket
 
 
 while True:
     try:
-        ws = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
-                        on_open=on_open,
-                        on_message=on_message,
-                        on_error=on_error,
-                        on_close=on_close,
-                        header={"Cookie": "session=tokenman"},)
-        ws_thread = Thread(target=ws.run_forever)
-        ws_thread.start()
+        ws = start_websocket()
         time.sleep(1)
         ws.send(json.dumps({"type": "fetch-users"}))
         break
     except:
         time.sleep(2)
+
 
 # master_stats_thread = Thread(target=send_stats_mto_master, args=(ws,))
 # master_stats_thread.start()
