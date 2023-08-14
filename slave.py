@@ -87,7 +87,7 @@ def on_error(ws, error):
 
 def on_close(ws: WebSocketApp, close_status_code, close_msg):
     print(f"Websocket connection closed. {close_status_code}. {close_msg}")
-    # start_websocket()
+    start_websocket()
 
 
 def on_open(ws: WebSocketApp):
@@ -121,7 +121,7 @@ while True:
         print("__SLAVE__ Started Successfuly")
         break
     except:
-        time.sleep(5)
+        time.sleep(60 * 5)
 
 
 # master_stats_thread = Thread(target=send_stats_mto_master, args=(ws,))
