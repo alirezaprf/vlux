@@ -1,14 +1,14 @@
 import json
 import subprocess
-
+import requests
 from websocket import WebSocketApp
 import time
 import os
 from threading import Thread
 
 MASTER_URL = "vluxm.irsuniversity.space"
-WS_PORT = "8000"
-
+PORT = "8000"
+WS_TOKEN = ""
 
 def add_user_with_password(username, password):
     try:
@@ -95,26 +95,27 @@ def on_open(ws: WebSocketApp):
 
 
 def start_websocket():
-    websocket = WebSocketApp(f"ws://{MASTER_URL}:{WS_PORT}/ws/",
+    websocket = WebSocketApp(f"ws://{MASTER_URL}:{PORT}/ws/",
                              on_open=on_open,
                              on_message=on_message,
                              on_error=on_error,
                              on_close=on_close,
-                             header={"Cookie": f"session={os.getenv('SLAVE_SESSION_KEY')}"}, )
+                             header={"Cookie": f"session={WS_TOKEN}"}, )
     ws_thread = Thread(target=websocket.run_forever)
     ws_thread.start()
     return websocket
 
+def get_ws_token():
+    response = requests.post(f"http://{MASTER_URL}:{PORT}/ws/auth/").json()
+    return response["access_token"]
 
 while True:
     try:
+        WS_TOKEN = get_ws_token()
         ws = start_websocket()
         time.sleep(1)
         ws.send(json.dumps({"type": "fetch-users"}))
+        print("__SLAVE__ Started Successfuly")
         break
     except:
         time.sleep(2)
-
-
-# master_stats_thread = Thread(target=send_stats_mto_master, args=(ws,))
-# master_stats_thread.start()
