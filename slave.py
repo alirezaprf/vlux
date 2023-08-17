@@ -1,4 +1,5 @@
 import json
+import logging
 import subprocess
 import time
 from threading import Thread
@@ -6,52 +7,82 @@ from threading import Thread
 import requests
 from websocket import WebSocketApp
 
+logging.basicConfig(
+    level=logging.INFO,
+    filename='slave.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 MASTER_URL = "vluxm.irsuniversity.space"
 PORT = "8000"
 WS_TOKEN = ""
+
+logger = logging.getLogger(__name__)
 
 
 def add_user_with_password(username, password):
     try:
         subprocess.run(['useradd', '-M', '-s', '/bin/false', username], check=True)
-        print(f"User `{username}` created successfully.")
+        log_text = f"User `{username}` created successfully."
+        logger.info(log_text)
+        print(log_text)
         change_password_for_user(username, password)
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred on creating user `{username}`. {e}")
+        error_text = f"Error occurred on creating user `{username}`. {e}"
+        logger.error(error_text)
+        print(error_text)
 
 
 def disable_ssh_for_user(username):
     try:
         subprocess.run(['adduser', username, 'disabled_users'], check=True)
-        print(f"User {username} added to disabled_users group.")
+        log_text = f"User {username} added to disabled_users group."
+        logger.info(log_text)
+        print(log_text)
         subprocess.run(['pkill', '-u', username], check=True)
-        print(f"SSH access disabled for user `{username}`.")
+        log_text = f"SSH access disabled for user `{username}`."
+        logger.info(log_text)
+        print(log_text)
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred on disabling user `{username}`. {e}")
+        error_text = f"Error occurred on disabling user `{username}`. {e}"
+        logger.error(error_text)
+        print(error_text)
 
 
 def enable_ssh_for_user(username):
     try:
         subprocess.run(['gpasswd', '-d', username, 'disabled_users'], check=True)
-        print(f"User `{username}` removed from disabled_users group.")
+        log_text = f"User `{username}` removed from disabled_users group."
+        logger.info(log_text)
+        print(log_text)
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred on enabling user `{username}`. {e}")
+        error_text = f"Error occurred on enabling user `{username}`. {e}"
+        logger.error(error_text)
+        print(error_text)
 
 
 def delete_user(username):
     try:
         subprocess.run(['userdel', username], check=True)
-        print(f"User `{username}` deleted.")
+        log_text = f"User `{username}` deleted."
+        logger.info(log_text)
+        print(log_text)
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred on deleting user `{username}`. {e}")
+        error_text = f"Error occurred on deleting user `{username}`. {e}"
+        logger.error(error_text)
+        print(error_text)
 
 
 def change_password_for_user(username, new_password):
     try:
         subprocess.run(f'echo {username}:{new_password} | chpasswd', shell=True, check=True)
-        print(f"Changed user `{username}` password to `{new_password}`.")
+        log_text = f"Changed user `{username}` password to `{new_password}`."
+        logger.info(log_text)
+        print(log_text)
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred on changing password of user `{username}`. {e}")
+        error_text = f"Error occurred on changing password of user `{username}`. {e}"
+        logger.error(error_text)
+        print(error_text)
 
 
 def new_command(cmd: str):
@@ -83,15 +114,18 @@ def on_message(ws, message):
 
 
 def on_error(ws, error):
+    logger.error(f"Error occurred on websocket. {error}")
     print(f"Error occurred : {error}")
 
 
 def on_close(ws: WebSocketApp, close_status_code, close_msg):
+    logger.info(f"Websocket connection closed. {close_status_code}. {close_msg}")
     print(f"Websocket connection closed. {close_status_code}. {close_msg}")
     start_websocket()
 
 
 def on_open(ws: WebSocketApp):
+    logger.info(f"Opened connection to master. {ws.url}")
     print("Opened connection ")
 
 
@@ -116,12 +150,14 @@ while True:
     try:
         WS_TOKEN = get_ws_token()
         if WS_TOKEN == "":
+            logger.error("Token not valid")
             print("Token not valid")
             raise Exception("Token not valid")
         ws = start_websocket()
         time.sleep(1)
         ws.send(json.dumps({"type": "fetch-users"}))
-        print("__SLAVE__ Started Successfuly")
+        logger.info("Slave started successfully.")
+        print("__SLAVE__ Started Successfully")
         break
     except:
         time.sleep(60 * 5)
