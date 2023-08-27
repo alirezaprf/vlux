@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y \
  	sudo \
 	systemd \
 	openssh-server \
-	git && \
+	git bsdmainutils tshark tcpdump  && \
 	apt-get clean
 
 # Create admin_user with password and SSH access
