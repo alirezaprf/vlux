@@ -36,7 +36,7 @@ WORKDIR /app
 
 # Copy docker entrypoint
 COPY docker-entrypoint.sh .
-COPY traffic.py .
+
 # Set entrypoint
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
