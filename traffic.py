@@ -51,7 +51,7 @@ def to_mgb(d:dict):
 def files_analyze(folder_name ,ws_send) :
     while True:
         try:
-            # time.sleep(1)
+            time.sleep(60)
             print("analyzing ... ")
             files = os.listdir(folder_name)
             files.sort(key=lambda x: int(x.split('.')[0]))
