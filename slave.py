@@ -17,7 +17,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-MASTER_URL = "vluxm.irsuniversity.space"
+MASTER_URL = "admin.mohkamkar.me"
 PORT = "8000"
 WS_TOKEN = ""
 
