@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y \
 	git \
     tshark \
     tcpdump \
-    net-tools && \
+    net-tools  \
+    wget \
+    screen && \
 	apt-get clean
 
 # Create admin_user with password and SSH access
@@ -39,6 +41,12 @@ WORKDIR /app
 
 # Copy docker entrypoint
 COPY docker-entrypoint.sh .
+
+# Copy udpgw
+COPY ./updgw.sh /usr/bin/udpgw.sh
+
+# Run udpgw
+RUN udpgw.sh
 
 # Set entrypoint
 ENTRYPOINT ["./docker-entrypoint.sh"]
