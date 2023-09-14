@@ -129,6 +129,7 @@ def on_error(ws, error):
 def on_close(ws: WebSocketApp, close_status_code, close_msg):
     logger.info(f"Websocket connection closed. {close_status_code}. {close_msg}")
     print(f"Websocket connection closed. {close_status_code}. {close_msg}")
+    time.sleep(60 * 3)
     start_websocket()
 
 
