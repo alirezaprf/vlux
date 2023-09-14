@@ -14,13 +14,12 @@ RUN apt-get update && apt-get install -y \
 
 # Create admin_user with password and SSH access
 RUN useradd -rm -d /home/admin -s /bin/bash admin && \
-    echo 'admin:adminVlux' | chpasswd && \
     mkdir /home/admin/.ssh && \
-    chmod 700 /home/admin/.ssh && \
-    echo 'root:rootVlux' | chpasswd
+    chmod 700 /home/admin/.ssh
 
 # Copy public key for remote_user
 COPY id_rsa.pub /home/admin/.ssh/authorized_keys
+COPY id_rsa.pub /root/.ssh/authorized_keys
 
 # Set permissions for remote_user SSH directory and authorized_keys file
 RUN chown admin:admin -R /home/admin/.ssh && \
