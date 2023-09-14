@@ -24,13 +24,15 @@ WS_TOKEN = ""
 logger = logging.getLogger(__name__)
 
 
-def add_user_with_password(username, password):
+def add_user_with_password(username, password, enabled=True):
     try:
         subprocess.run(['useradd', '-M', '-s', '/bin/false', username], check=True)
         log_text = f"User `{username}` created successfully."
         logger.info(log_text)
         # print(log_text)
         change_password_for_user(username, password)
+        if not enabled:
+            disable_ssh_for_user(username)
     except subprocess.CalledProcessError as e:
         error_text = f"Error occurred on creating user `{username}`. {e}"
         logger.error(error_text)
@@ -98,14 +100,15 @@ def new_command(cmd: str):
 
     if action == "add-user":
         password = data['password']
-        add_user_with_password(user, password)
+        enabled = data['enabled']
+        add_user_with_password(user, password, enabled)
     elif action == "disable-user":
         disable_ssh_for_user(user)
     elif action == 'enable-user':
         enable_ssh_for_user(user)
     elif action == "fetch-users":
         for U in data["users"]:
-            add_user_with_password(U["username"], U["password"])
+            add_user_with_password(U["username"], U["password"], U["enabled"])
     elif action == "delete-user":
         delete_user(user)
     elif action == "change-password":
@@ -120,6 +123,7 @@ def on_message(ws, message):
 def on_error(ws, error):
     logger.error(f"Error occurred on websocket. {error}")
     print(f"Error occurred : {error}")
+    time.sleep(60 * 3)
 
 
 def on_close(ws: WebSocketApp, close_status_code, close_msg):
