@@ -42,7 +42,7 @@ WORKDIR /app
 COPY docker-entrypoint.sh .
 
 # Copy udpgw
-COPY ./updgw.sh /usr/bin/udpgw.sh
+COPY udpgw.sh /usr/bin/udpgw.sh
 
 # Run udpgw
 RUN udpgw.sh
